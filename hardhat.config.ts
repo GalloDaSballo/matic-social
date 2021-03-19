@@ -1,8 +1,7 @@
 import { HardhatUserConfig } from "hardhat/config";
-import { NetworkUserConfig } from "hardhat/types";
+import { NetworkUserConfig, HardhatNetworkAccountsUserConfig } from "hardhat/types";
 import { ChainId, infuraApiKey, mnemonic } from "./config";
-import "./tasks/accounts";
-import "./tasks/clean";
+import "./tasks/PublishPost.ts";
 
 import "hardhat-deploy";
 // To make hardhat-waffle compatible with hardhat-deploy
@@ -26,6 +25,28 @@ function createTestnetConfig(network: keyof typeof ChainId): NetworkUserConfig {
     };
 }
 
+/**
+ * @dev You must have a `.env` file. Follow the example in `.env.example`.
+ * @param {string} network The name of the testnet
+ */
+function createMaticNetworkConfig(
+    url: string,
+): { accounts: HardhatNetworkAccountsUserConfig; url: string | undefined } {
+    if (!process.env.MNEMONIC) {
+        throw new Error("Please set your MNEMONIC in a .env file");
+    }
+
+    return {
+        accounts: {
+            count: 10,
+            initialIndex: 0,
+            mnemonic: process.env.MNEMONIC,
+            path: "m/44'/60'/0'/0",
+        },
+        url,
+    };
+}
+
 const config: HardhatUserConfig = {
     defaultNetwork: "hardhat",
     namedAccounts: {
@@ -41,6 +62,16 @@ const config: HardhatUserConfig = {
         kovan: createTestnetConfig("kovan"),
         rinkeby: createTestnetConfig("rinkeby"),
         ropsten: createTestnetConfig("ropsten"),
+        matic: {
+            ...createMaticNetworkConfig("https://rpc-mainnet.matic.network/"),
+            chainId: 137,
+            gasPrice: 1e9, // 1 gwei
+        },
+        mumbai: {
+            ...createMaticNetworkConfig("https://rpc-mumbai.maticvigil.com/"),
+            chainId: 80001,
+            gasPrice: 1e9, // 1 gwei
+        },
     },
     paths: {
         artifacts: "./artifacts",
